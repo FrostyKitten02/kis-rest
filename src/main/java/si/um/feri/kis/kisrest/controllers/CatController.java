@@ -1,5 +1,6 @@
 package si.um.feri.kis.kisrest.controllers;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import si.um.feri.kis.kisrest.execptions.ItemNotFound;
@@ -8,19 +9,26 @@ import si.um.feri.kis.kisrest.repos.CatRepo;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/cats")
-public class CatsController {
+@RequestMapping("/cat")
+public class CatController {
     private final CatRepo catRepo;
 
     @PostMapping
-    public Cat addCat(@RequestBody Cat cat) {
+    public Cat addCat(@RequestBody Cat cat, HttpServletResponse res) {
         cat.setId(null);
-        return catRepo.save(cat);
+        Cat saved = catRepo.save(cat);
+        res.setStatus(HttpServletResponse.SC_CREATED);
+        return saved;
     }
 
     @GetMapping("/{id}")
     public Cat getCatById(@PathVariable Long id) {
         return catRepo.findById(id).orElseThrow(() -> new ItemNotFound("Cat with id " + id + " not found"));
+    }
+
+    @GetMapping("/all")
+    public Iterable<Cat> getAllCats() {
+        return catRepo.findAll();
     }
 
     @PutMapping("/{id}")
@@ -33,11 +41,12 @@ public class CatsController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteCat(@PathVariable Long id) {
+    public void deleteCat(@PathVariable Long id, HttpServletResponse res) {
         if (!catRepo.existsById(id)) {
             throw new ItemNotFound("Cat with id " + id + " not found");
         }
         catRepo.deleteById(id);
+        res.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
 }
